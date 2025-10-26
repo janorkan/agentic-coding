@@ -1,0 +1,105 @@
+# code_generation.yaml — Automated Code Generation Workflow
+
+# Purpose: Define a structured, agentic workflow for planning, generating, testing, and documenting new code features.
+
+version: "1.0"
+name: "Code Generation Workflow"
+description: "Coordinates agents to generate, review, test, and document code safely and efficiently."
+
+workflow:
+trigger:
+- command: "/plan"
+- command: "/generate"
+- event: "new_issue_created"
+- event: "sprint_start"
+
+stages:
+
+```
+- name: "🧩 Stage 1: Context & Planning"
+  description: "Analyze project structure and issue requirements."
+  agents:
+    - scrum_master:
+        task: >
+          Read /planning/sprint/<active_sprint>/issue_*.md and summarize open issues.
+          Identify implementation priorities and dependencies.
+    - master_prompter:
+        task: >
+          Refine coding prompts based on issue goals and system architecture.
+          Enhance clarity, add missing context, and prepare for precise code generation.
+  outputs:
+    - "context_summary.md"
+    - "enhanced_prompt.txt"
+
+- name: "⚙️ Stage 2: Code Generation"
+  description: "Generate new or updated source code modules."
+  agents:
+    - claude_builtin:
+        task: >
+          Generate safe, modular, and PEP-8 compliant code into /src/.
+          Use prompts refined by master_prompter and context_summary.md.
+    - goethe:
+        task: >
+          Ensure release structure and naming conventions are consistent.
+          Pre-validate code organization and version tags.
+  outputs:
+    - "/src/<new_module>.py"
+    - "generation_log.md"
+
+- name: "🧪 Stage 3: Testing & Validation"
+  description: "Ensure correctness and regression safety."
+  agents:
+    - qa_tester:
+        task: >
+          Run /test all command.
+          Generate or update missing unit and regression tests.
+    - refactor:
+        task: >
+          If tests fail, rollback and repair generated code safely.
+          Re-run qa_tester until full pass.
+  outputs:
+    - "/planning/sprint/<active_sprint>/qa_reports/test_report_<date>.md"
+    - "/agents/agents_memory/state/qa_status.json"
+
+- name: "📘 Stage 4: Documentation"
+  description: "Synchronize documentation with generated code."
+  agents:
+    - doc_boy:
+        task: >
+          Run /document all.
+          Update inline comments, docstrings, and /docs/ architecture files.
+    - brian:
+        task: >
+          Archive the new code and documentation snapshot for regression reference.
+  outputs:
+    - "/docs/architecture/update_<date>.md"
+    - "/agents/agents_memory/state/doc_coverage_map.json"
+
+- name: "🚀 Stage 5: Final Review & Commit"
+  description: "Perform peer and agent review before commit."
+  agents:
+    - review:
+        task: >
+          Validate generated code meets issue requirements and coding standards.
+    - scrum_master:
+        task: >
+          Mark issue(s) as completed and update sprint progress.
+    - goethe:
+        task: >
+          Prepare commit message and bump version if required.
+  outputs:
+    - "review_report.md"
+    - "commit_message.txt"
+    - "version_bump_log.json"
+```
+
+completion:
+actions:
+- "Notify project lead: Code generation completed successfully."
+- "Archive QA and documentation reports under /planning/sprint/<active_sprint>/history/"
+- "Generate summary report code_generation_summary_<date>.md"
+
+metadata:
+author: "Claude System & Custom Agents"
+created: "2025-10-18"
+file: ".claude/workflows/code_generation.yaml"
